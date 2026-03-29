@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fabián Botina — Software Empresarial</title>
+  <meta name="description" content="Suite de software que optimiza la captura, extracción y gestión de documentos. MAPOCR, INDEXA y CAPTOR.">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --mapocr:    #2A7A35; --mapocr-lt: #EBF7ED; --mapocr-dk: #1B5225;
+      --indexa:    #1B4F8C; --indexa-lt: #E8F0FB; --indexa-dk: #0F2A5E;
+      --captor:    #1565C0; --captor-lt: #E3F0FF; --captor-dk: #0D47A1;
+      --text:      #1E293B; --muted:     #64748B;  --border:   #E2E8F0;
+      --bg:        #F8FAFC; --white:     #FFFFFF;
+      --r:         12px;
+      --sh:        0 4px 24px rgba(0,0,0,.08);
+      --sh-lg:     0 16px 56px rgba(0,0,0,.14);
+      --font:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html  { scroll-behavior: smooth; }
+    body  { font-family: var(--font); color: var(--text); background: var(--white); line-height: 1.6; overflow-x: hidden; }
+    img   { display: block; max-width: 100%; height: auto; }
+    a     { text-decoration: none; color: inherit; }
+    ul    { list-style: none; }
+
+    /* ── Animaciones ── */
+    [data-anim] { opacity: 0; transition: opacity .7s ease, transform .7s ease; }
+    [data-anim="up"]    { transform: translateY(40px); }
+    [data-anim="left"]  { transform: translateX(-48px); }
+    [data-anim="right"] { transform: translateX(48px); }
+    [data-anim].visible { opacity: 1 !important; transform: none !important; }
+    [data-stagger] > * { opacity: 0; transform: translateY(28px); transition: opacity .55s ease, transform .55s ease; }
+    [data-stagger].visible > *:nth-child(1){ opacity:1;transform:none;transition-delay:.04s; }
+    [data-stagger].visible > *:nth-child(2){ opacity:1;transform:none;transition-delay:.13s; }
+    [data-stagger].visible > *:nth-child(3){ opacity:1;transform:none;transition-delay:.22s; }
+    [data-stagger].visible > *:nth-child(4){ opacity:1;transform:none;transition-delay:.31s; }
+    @keyframes float { 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-9px); } }
+
+    /* ── Helpers ── */
+    .container { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+    .tag { display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 13px;border-radius:20px; }
+    .tg  { background:var(--mapocr-lt);color:var(--mapocr-dk); }
+    .tb  { background:rgba(255,255,255,.14);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.2); }
+    .tc  { background:var(--captor-lt);color:var(--captor-dk); }
+    .tco { background:rgba(255,255,255,.1);color:rgba(255,255,255,.7); }
+    .btn { display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:11px 22px;border-radius:9px;transition:all .2s;cursor:pointer;border:none; }
+    .bg  { background:var(--mapocr);color:#fff; }
+    .bg:hover { background:var(--mapocr-dk);transform:translateY(-1px);box-shadow:0 6px 20px rgba(42,122,53,.35); }
+    .bb  { background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.3); }
+    .bb:hover { background:rgba(255,255,255,.24);transform:translateY(-1px); }
+    .bc  { background:var(--captor);color:#fff; }
+    .bc:hover { background:var(--captor-dk);transform:translateY(-1px);box-shadow:0 6px 20px rgba(21,101,192,.35); }
+
+    /* ── Screenshots ── */
+    .ss { border-radius:14px;overflow:hidden;box-shadow:var(--sh-lg);position:relative;transition:transform .3s,box-shadow .3s; }
+    .ss:hover { transform:translateY(-4px);box-shadow:0 24px 72px rgba(0,0,0,.18); }
+    .ss::after { content:'';position:absolute;inset:0;border-radius:14px;border:1px solid rgba(0,0,0,.07);pointer-events:none; }
+    .ss-sm { border-radius:10px; }
+    .ss-sm::after { border-radius:10px; }
+    .ss-row { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px; }
+
+    /* ── Feature list ── */
+    .fl { display:flex;flex-direction:column;gap:12px;margin-bottom:30px; }
+    .fl li { display:flex;align-items:flex-start;gap:10px;font-size:15px; }
+    .fli { flex-shrink:0;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:2px; }
+    .fig { background:var(--mapocr-lt);color:var(--mapocr); }
+    .fib { background:rgba(255,255,255,.15);color:rgba(255,255,255,.9); }
+    .fic { background:var(--captor-lt);color:var(--captor); }
+
+    /* ── Feature cards ── */
+    .fcg { display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px; }
+    .fc  { background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px;transition:box-shadow .25s,transform .25s; }
+    .fc:hover { box-shadow:var(--sh);transform:translateY(-3px); }
+    .fci { width:42px;height:42px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:13px; }
+    .fc h4 { font-size:15px;font-weight:700;margin-bottom:6px; }
+    .fc p  { font-size:13px;color:var(--muted);line-height:1.6; }
+
+    /* ── Headings ── */
+    .ph { font-size:clamp(22px,3vw,33px);font-weight:800;letter-spacing:-.02em;line-height:1.2;margin:13px 0 17px; }
+    .pd { font-size:15px;color:var(--muted);margin-bottom:26px;line-height:1.75; }
+
+    /* ════════════ NAV ════════════ */
+    nav { position:sticky;top:0;z-index:200;background:rgba(255,255,255,.93);backdrop-filter:blur(12px);border-bottom:1px solid var(--border); }
+    .nav-in { display:flex;align-items:center;justify-content:space-between;height:60px; }
+    .nav-brand { font-size:15px;font-weight:700; }
+    .nav-brand span { color:var(--captor); }
+    .nl { display:flex;gap:4px;align-items:center; }
+    .nl a { font-size:13px;font-weight:500;color:var(--muted);padding:6px 13px;border-radius:8px;transition:all .2s; }
+    .nl a:hover { background:var(--bg);color:var(--text); }
+    .nl .nc { color:var(--white)!important;background:var(--captor)!important; }
+    .nl .nc:hover { background:var(--captor-dk)!important; }
+    .burger { display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;border:none;background:transparent; }
+    .burger span { display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all .3s; }
+    .burger.open span:nth-child(1){ transform:translateY(7px) rotate(45deg); }
+    .burger.open span:nth-child(2){ opacity:0; }
+    .burger.open span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
+    .nmob { display:none;position:fixed;top:60px;left:0;right:0;background:var(--white);border-bottom:1px solid var(--border);padding:12px 20px 20px;z-index:199;box-shadow:0 8px 24px rgba(0,0,0,.1); }
+    .nmob.open { display:flex;flex-direction:column;gap:4px; }
+    .nmob a { font-size:15px;font-weight:500;color:var(--text);padding:11px 14px;border-radius:9px;transition:background .2s; }
+    .nmob a:hover { background:var(--bg); }
+    .nmob .nc { background:var(--captor)!important;color:#fff!important;text-align:center;margin-top:8px; }
+
+    /* ════════════ HERO ════════════ */
+    .hero { background:linear-gradient(135deg,#0B1120 0%,#112244 45%,#0B1E10 100%);color:var(--white);padding:90px 0 80px;text-align:center;position:relative;overflow:hidden; }
+    .hero::before { content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 20% 60%,rgba(21,101,192,.2) 0%,transparent 55%),radial-gradient(ellipse at 80% 40%,rgba(42,122,53,.18) 0%,transparent 55%); }
+    .hero > .container { position:relative;z-index:1; }
+    .hero-eye { font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:20px; }
+    .hero h1  { font-size:clamp(30px,6vw,62px);font-weight:800;line-height:1.12;margin-bottom:22px;letter-spacing:-.025em; }
+    .hero h1 em { font-style:normal;color:#60C8FF; }
+    .hero-sub { font-size:clamp(15px,2vw,19px);color:rgba(255,255,255,.62);max-width:600px;margin:0 auto 52px; }
+    .hps { display:flex;justify-content:center;align-items:flex-end;gap:14px;flex-wrap:wrap; }
+    .hp { display:flex;align-items:center;gap:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);padding:13px 20px;border-radius:14px;backdrop-filter:blur(6px);transition:background .2s; }
+    .hp:hover { background:rgba(255,255,255,.13); }
+    .hp img  { width:36px;height:36px;object-fit:contain; }
+    .hp-name { font-size:14px;font-weight:700; }
+    .hp-desc { font-size:11px;color:rgba(255,255,255,.5); }
+    .hp:nth-child(1){ animation:float 5s ease-in-out 0s infinite; }
+    .hp:nth-child(2){ animation:float 5s ease-in-out .8s infinite;margin-bottom:26px; }
+    .hp:nth-child(3){ animation:float 5s ease-in-out 1.6s infinite; }
+
+    /* ════════════ STATS ════════════ */
+    .stats { padding:48px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border); }
+    .sg { display:flex;justify-content:center;flex-wrap:wrap; }
+    .si { text-align:center;padding:16px 44px;border-right:1px solid var(--border); }
+    .si:last-child { border-right:none; }
+    .sv { font-size:clamp(28px,4vw,38px);font-weight:800;letter-spacing:-.03em;line-height:1; }
+    .sl { font-size:12px;color:var(--muted);margin-top:4px;font-weight:500; }
+
+    /* ════════════ MAPOCR — blanco izq/der ════════════ */
+    #mapocr { padding:96px 0 56px; }
+    .two-col { display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center; }
+    #mfc { background:var(--bg);padding:44px 0 88px; }
+
+    /* ════════════ INDEXA — azul oscuro centrado ════════════ */
+    #indexa { background:linear-gradient(160deg,#0D2550 0%,#1B4F8C 60%,#0D3040 100%);color:var(--white);padding:96px 0 56px; }
+    .ix-h { text-align:center;max-width:700px;margin:0 auto 52px; }
+    .ix-h .ph { color:var(--white); }
+    .ix-h .pd { color:rgba(255,255,255,.62); }
+    .ix-g { display:grid;grid-template-columns:1.1fr 1fr;gap:52px;align-items:start; }
+    .ix-s { display:flex;flex-direction:column;gap:10px; }
+    #ifc  { background:var(--indexa-dk);padding:44px 0 88px; }
+    #ifc .fc { background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1); }
+    #ifc .fc h4 { color:var(--white); }
+    #ifc .fc p  { color:rgba(255,255,255,.52); }
+    #ifc .fc:hover { background:rgba(255,255,255,.1); }
+    #ifc .fci { background:rgba(255,255,255,.1); }
+
+    /* ════════════ CAPTOR — gris der/izq ════════════ */
+    #captor { background:var(--bg);padding:96px 0 56px; }
+    .two-col-r { display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center; }
+    .two-col-r .cv { order:1; }
+    .two-col-r .ct { order:2; }
+    #cfc { background:var(--white);padding:44px 0 88px; }
+
+    /* ════════════ CONTACTO ════════════ */
+    #contacto { background:linear-gradient(135deg,#0B1120 0%,#1B3A6E 100%);color:var(--white);padding:96px 0; }
+    .co-h { text-align:center;max-width:580px;margin:0 auto 52px; }
+    .co-h h2 { font-size:clamp(26px,3.5vw,40px);font-weight:800;letter-spacing:-.02em;margin-bottom:12px; }
+    .co-h p  { font-size:17px;color:rgba(255,255,255,.58); }
+    .coc { display:flex;justify-content:center;gap:14px;flex-wrap:wrap; }
+    .cod { display:flex;flex-direction:column;align-items:center;gap:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);padding:28px 36px;border-radius:14px;min-width:170px;text-align:center;transition:background .2s,transform .2s; }
+    .cod:hover { background:rgba(255,255,255,.13);transform:translateY(-3px); }
+    .co-icon  { font-size:28px; }
+    .co-label { font-size:11px;color:rgba(255,255,255,.42);font-weight:700;letter-spacing:.07em;text-transform:uppercase; }
+    .co-val   { font-size:13px;font-weight:600;color:rgba(255,255,255,.88);word-break:break-all; }
+
+    /* ════════════ FOOTER ════════════ */
+    footer { background:#070C17;color:rgba(255,255,255,.32);text-align:center;padding:26px 20px;font-size:12px; }
+    footer strong { color:rgba(255,255,255,.6); }
+
+    /* ════════════ RESPONSIVE 1024px ════════════ */
+    @media(max-width:1024px){
+      .two-col,.two-col-r { gap:44px; }
+      .ix-g { gap:40px; }
+      .si { padding:16px 28px; }
+    }
+
+    /* ════════════ RESPONSIVE 860px (tablet) ════════════ */
+    @media(max-width:860px){
+      .nl { display:none; }
+      .burger { display:flex; }
+      .hp:nth-child(2){ margin-bottom:0; }
+      .hp { animation:none!important; }
+      .hero { padding:72px 0 64px; }
+      .sg { display:grid;grid-template-columns:1fr 1fr; }
+      .si { border-right:none;border-bottom:1px solid var(--border);padding:18px 16px; }
+      .si:nth-child(odd)  { border-right:1px solid var(--border); }
+      .si:nth-child(3),.si:nth-child(4) { border-bottom:none; }
+      .two-col,.two-col-r,.ix-g { grid-template-columns:1fr;gap:36px; }
+      .two-col-r .cv { order:2; }
+      .two-col-r .ct { order:1; }
+      #mapocr,#indexa,#captor { padding:72px 0 44px; }
+      #mfc,#ifc,#cfc { padding-bottom:68px; }
+    }
+
+    /* ════════════ RESPONSIVE 580px (móvil) ════════════ */
+    @media(max-width:580px){
+      .hero { padding:56px 0 52px; }
+      .hps { flex-direction:column;align-items:center;gap:10px; }
+      .hp  { width:100%;max-width:320px;justify-content:center; }
+      .sg  { grid-template-columns:1fr; }
+      .si  { border-right:none!important;border-bottom:1px solid var(--border);padding:16px 20px; }
+      .si:last-child { border-bottom:none; }
+      .ss-row { grid-template-columns:1fr; }
+      .ix-s .ss-row { grid-template-columns:1fr 1fr; }
+      .fcg { grid-template-columns:1fr; }
+      .coc { flex-direction:column;align-items:center; }
+      .cod { width:100%;max-width:320px; }
+      #mapocr,#indexa,#captor { padding:56px 0 36px; }
+    }
+
+    /* ════════════ RESPONSIVE 380px (móvil pequeño) ════════════ */
+    @media(max-width:380px){
+      .container { padding:0 14px; }
+      .ph { font-size:20px; }
+      .fl li { font-size:14px; }
+      .btn { font-size:13px;padding:10px 18px; }
+      .ix-s .ss-row { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="container nav-in">
+    <div class="nav-brand">Fabián <span>Botina</span></div>
+    <div class="nl">
+      <a href="#mapocr">MAPOCR</a>
+      <a href="#indexa">INDEXA</a>
+      <a href="#captor">CAPTOR</a>
+      <a href="#contacto" class="nc">Contacto</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Menú"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="nmob" id="nm">
+  <a href="#mapocr"   onclick="cm()">MAPOCR</a>
+  <a href="#indexa"   onclick="cm()">INDEXA</a>
+  <a href="#captor"   onclick="cm()">CAPTOR</a>
+  <a href="#contacto" onclick="cm()" class="nc">Contacto</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <p class="hero-eye" data-anim="up">Software Empresarial · Fabián Botina</p>
+    <h1 data-anim="up">Optimiza. Extrae.<br><em>Haz más en menos tiempo.</em></h1>
+    <p class="hero-sub" data-anim="up">Tres herramientas que simplifican tareas complejas en la captura, extracción y gestión de documentos e información empresarial.</p>
+    <div class="hps">
+      <a href="#mapocr" class="hp"><img src="assets/logos/mapocr.ico" alt="MAPOCR" width="36" height="36"><div><div class="hp-name">MAPOCR</div><div class="hp-desc">OCR & Extracción de datos</div></div></a>
+      <a href="#indexa" class="hp"><img src="assets/logos/indexa.ico" alt="INDEXA" width="36" height="36"><div><div class="hp-name">INDEXA</div><div class="hp-desc">Gestión documental</div></div></a>
+      <a href="#captor" class="hp"><img src="assets/logos/captor.ico" alt="CAPTOR" width="36" height="36"><div><div class="hp-name">CAPTOR</div><div class="hp-desc">Captura & Optimización</div></div></a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="container">
+    <div class="sg" data-stagger>
+      <div class="si"><div class="sv" style="color:var(--mapocr)">3</div><div class="sl">Productos especializados</div></div>
+      <div class="si"><div class="sv" style="color:var(--indexa)">7</div><div class="sl">Proveedores de datos en CAPTOR</div></div>
+      <div class="si"><div class="sv" style="color:var(--captor)">∞</div><div class="sl">Extracciones por cada OCR procesado</div></div>
+      <div class="si"><div class="sv" style="color:var(--mapocr)">100%</div><div class="sl">Offline · Sin dependencias cloud</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAPOCR -->
+<section id="mapocr">
+  <div class="container">
+    <div class="two-col">
+      <div data-anim="left">
+        <span class="tag tg">🔍 OCR & Extracción de Datos</span>
+        <h2 class="ph">Procesa el documento una vez.<br>Extrae datos infinitas veces.</h2>
+        <p class="pd">MAPOCR aplica OCR al documento, almacena el resultado indexado y permite aplicar cualquier plantilla de extracción cuantas veces necesites sin volver a procesar el archivo. Disponible como <strong>API REST</strong> y como <strong>cliente CLI</strong>.</p>
+        <ul class="fl">
+          <li><span class="fli fig">✓</span><span><strong>Elige el motor:</strong> Tesseract local (gratuito, 100% offline) <em>o</em> GPT-4o IA (mayor precisión en docs complejos, con costo adicional)</span></li>
+          <li><span class="fli fig">✓</span><span><strong>API REST + CLI:</strong> integra MAPOCR en cualquier sistema o pipeline desde terminal</span></li>
+          <li><span class="fli fig">✓</span><span><strong>Cola asíncrona</strong> con worker en background para volúmenes altos sin bloquear el sistema</span></li>
+          <li><span class="fli fig">✓</span><span><strong>Plantillas reutilizables</strong> con reglas por campo; también extracción ad-hoc sin plantilla guardada</span></li>
+          <li><span class="fli fig">✓</span><span><strong>Perfiles de preprocesamiento:</strong> corrección de imagen, rotación automática, binarización configurables</span></li>
+          <li><span class="fli fig">✓</span><span><strong>Dashboard de métricas:</strong> jobs por día, volúmenes, documentos más grandes, estadísticas globales</span></li>
+          <li><span class="fli fig">✓</span><span><strong>Referencias externas</strong> para enlazar resultados con tu GED sin modificar sus identificadores internos</span></li>
+          <li><span class="fli fig">✓</span><span>Formatos: <strong>PDF, PNG, JPG, TIFF</strong> · BD cifrada SQLCipher · Swagger incluido</span></li>
+        </ul>
+        <a href="#contacto" class="btn bg">Solicitar información →</a>
+      </div>
+      <div data-anim="right">
+        <div class="ss"><img src="assets/screenshots/mapocr-interfaz.png" alt="MAPOCR interfaz"></div>
+        <div style="margin-top:10px"><div class="ss ss-sm"><img src="assets/screenshots/mapocr-api.png" alt="MAPOCR API Swagger"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+<div id="mfc">
+  <div class="container">
+    <div class="fcg" data-stagger>
+      <div class="fc"><div class="fci" style="background:var(--mapocr-lt)">⚡</div><h4>Reutilización de OCR</h4><p>Mismo documento = mismo hash SHA-256. MAPOCR detecta el duplicado y evita reprocesarlo automáticamente.</p></div>
+      <div class="fc"><div class="fci" style="background:var(--mapocr-lt)">🧠</div><h4>Motor a tu medida</h4><p>Tesseract para operaciones frecuentes sin costo. GPT-4o para documentos de diseño complejo o baja calidad de imagen.</p></div>
+      <div class="fc"><div class="fci" style="background:var(--mapocr-lt)">🖥️</div><h4>Cliente CLI incluido</h4><p>Procesa y extrae documentos directamente desde terminal. Ideal para scripts de automatización y pipelines de datos.</p></div>
+      <div class="fc"><div class="fci" style="background:var(--mapocr-lt)">📊</div><h4>Auditoría completa</h4><p>Campos encontrados, confianza promedio, motor usado y tiempo de ejecución registrados en cada extracción.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- INDEXA -->
+<section id="indexa">
+  <div class="container">
+    <div class="ix-h" data-anim="up">
+      <span class="tag tb">🗃️ Gestión Documental</span>
+      <h2 class="ph">Digitaliza, indexa y exporta.<br>Listo para tu sistema GED.</h2>
+      <p class="pd">INDEXA convierte documentos físicos en registros digitales estructurados con validación de datos, reglas por campo y scripts C# personalizados. Resultado: índice TXT + imagen listo para importar en <strong style="color:#fff">OnBase</strong> u otro sistema documental.</p>
+    </div>
+    <div class="ix-g">
+      <div class="ix-s" data-anim="left">
+        <div class="ss"><img src="assets/screenshots/indexa-indexacion.png" alt="INDEXA indexación"></div>
+        <div class="ss-row">
+          <div class="ss ss-sm"><img src="assets/screenshots/indexa-calidad.png" alt="INDEXA calidad"></div>
+          <div class="ss ss-sm"><img src="assets/screenshots/indexa-configuracion.png" alt="INDEXA configuración"></div>
+        </div>
+      </div>
+      <div style="padding-top:4px" data-anim="right">
+        <ul class="fl">
+          <li><span class="fli fib">✓</span><span><strong>Scripts C# (Roslyn)</strong> a nivel documento y campo: autollenado, validaciones cruzadas, lógica personalizada sin límites</span></li>
+          <li><span class="fli fib">✓</span><span><strong>Listas en cascada</strong> multi-nivel filtradas automáticamente según la selección anterior</span></li>
+          <li><span class="fli fib">✓</span><span><strong>Tipos de documento configurables</strong> con campos, reglas y scripts completamente independientes</span></li>
+          <li><span class="fli fib">✓</span><span><strong>Drivers TWAIN y WIA</strong> — compatible con la mayoría de escáneres del mercado</span></li>
+          <li><span class="fli fib">✓</span><span><strong>Control de calidad (QA):</strong> calificación de lotes, observaciones y dashboard de productividad</span></li>
+          <li><span class="fli fib">✓</span><span><strong>Pools de licencia Digit e Index</strong> independientes, asignados por máquina (HWID)</span></li>
+          <li><span class="fli fib">✓</span><span><strong>Grupos de exportación</strong> configurables para el formato exacto que espera cada sistema destino</span></li>
+          <li><span class="fli fib">✓</span><span>Bloqueo concurrente de lotes · Documentos multipágina · Roles y permisos granulares</span></li>
+        </ul>
+        <a href="#contacto" class="btn bb">Solicitar información →</a>
+      </div>
+    </div>
+  </div>
+</section>
+<div id="ifc">
+  <div class="container" style="padding-top:44px">
+    <div class="fcg" data-stagger>
+      <div class="fc"><div class="fci">🔬</div><h4>Scripts compilados</h4><p>Assembly guardado en BD, ejecución en milisegundos. Log detallado de cada llamada con errores.</p></div>
+      <div class="fc"><div class="fci">🔗</div><h4>Integración con OnBase</h4><p>Exporta índice TXT + imagen en el formato exacto que espera OnBase u otros sistemas GED configurados.</p></div>
+      <div class="fc"><div class="fci">⭐</div><h4>Dashboard de Calidad</h4><p>Métricas de productividad, calificación de lotes y tiempos del equipo en tiempo real.</p></div>
+      <div class="fc"><div class="fci">🔒</div><h4>Control por máquina</h4><p>Solo los equipos físicos registrados con licencia asignada pueden digitalizar o indexar documentos.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- CAPTOR -->
+<section id="captor">
+  <div class="container">
+    <div class="two-col-r">
+      <div class="cv" data-anim="left">
+        <div class="ss"><img src="assets/screenshots/captor-logs.png" alt="CAPTOR logs"></div>
+        <div style="margin-top:10px;max-width:230px;margin-left:auto;margin-right:auto">
+          <div class="ss ss-sm"><img src="assets/screenshots/captor-menu.png" alt="CAPTOR menú"></div>
+        </div>
+      </div>
+      <div class="ct" data-anim="right">
+        <span class="tag tc">⚙️ Captura & Optimización</span>
+        <h2 class="ph">Lee cualquier pantalla.<br>Consulta. Decide más rápido.</h2>
+        <p class="pd">CAPTOR captura datos de cualquier aplicación de escritorio o web, los consulta contra tus fuentes de información y presenta el resultado al operario en segundos. Menos búsquedas manuales, decisiones más ágiles.</p>
+        <ul class="fl">
+          <li><span class="fli fic">✓</span><span><strong>Captura visual universal:</strong> selecciona con clic cualquier campo de app desktop o web — sin programar selectores</span></li>
+          <li><span class="fli fic">✓</span><span><strong>Consulta bases de datos, sistemas externos vía API REST o Script C# personalizado</strong> — las posibilidades son infinitas</span></li>
+          <li><span class="fli fic">✓</span><span><strong>7 proveedores de datos:</strong> SQL Server, MySQL, SQLite, REST API, Excel, Archivo de texto, Script C#</span></li>
+          <li><span class="fli fic">✓</span><span><strong>Conecta APIs externas</strong> como proveedor de datos: Bearer, Basic Auth, token dinámico, headers y body JSON/Form</span></li>
+          <li><span class="fli fic">✓</span><span><strong>8 tipos de respuesta:</strong> mensaje, tabla, campos capturados, script, combinado, abrir URL, carpeta o archivo</span></li>
+          <li><span class="fli fic">✓</span><span><strong>Hotkey global:</strong> el operario activa el perfil con una tecla sin salir de su aplicación actual</span></li>
+          <li><span class="fli fic">✓</span><span><strong>Encadenamiento de acciones:</strong> el resultado de una consulta alimenta la siguiente en el mismo flujo</span></li>
+          <li><span class="fli fic">✓</span><span>Log de ejecuciones · Roles y grupos · Sesiones en tiempo real · Vive en la bandeja del sistema</span></li>
+        </ul>
+        <a href="#contacto" class="btn bc">Solicitar información →</a>
+      </div>
+    </div>
+  </div>
+</section>
+<div id="cfc">
+  <div class="container" style="padding-top:44px">
+    <div class="fcg" data-stagger>
+      <div class="fc"><div class="fci" style="background:var(--captor-lt)">🖱️</div><h4>Click and pick</h4><p>Selecciona el elemento en pantalla y CAPTOR captura el selector automáticamente, sin conocimiento técnico.</p></div>
+      <div class="fc"><div class="fci" style="background:var(--captor-lt)">⌨️</div><h4>Hotkeys globales</h4><p>Combinaciones de teclas para ejecutar perfiles sin interrumpir el flujo del operario en su aplicación actual.</p></div>
+      <div class="fc"><div class="fci" style="background:var(--captor-lt)">📁</div><h4>Abre lo que necesitas</h4><p>Busca y abre automáticamente un archivo, carpeta o URL según la información procesada. Cero búsqueda manual.</p></div>
+      <div class="fc"><div class="fci" style="background:var(--captor-lt)">🧩</div><h4>Scripts C# embebidos</h4><p>Editor con syntax highlighting, compilación dinámica y testing con F5 directo desde el diseñador.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- CONTACTO -->
+<section id="contacto">
+  <div class="container">
+    <div class="co-h" data-anim="up">
+      <span class="tag tco" style="margin-bottom:18px">✉️ Contacto</span>
+      <h2>¿Listo para optimizar tu operación?</h2>
+      <p>Escríbeme para conocer cómo MAPOCR, INDEXA o CAPTOR se adaptan a tu empresa.</p>
+    </div>
+    <div class="coc" data-stagger>
+      <a href="mailto:fabiibotii@gmail.com" class="cod"><div class="co-icon">📧</div><div class="co-label">Correo</div><div class="co-val">fabiibotii@gmail.com</div></a>
+      <a href="https://www.linkedin.com/in/fabian-botina-5430b1213" target="_blank" rel="noopener" class="cod"><div class="co-icon">💼</div><div class="co-label">LinkedIn</div><div class="co-val">Fabián Botina</div></a>
+      <a href="https://github.com/botina95" target="_blank" rel="noopener" class="cod"><div class="co-icon">🐙</div><div class="co-label">GitHub</div><div class="co-val">github.com/botina95</div></a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 <strong>Fabián Botina</strong> · MAPOCR · INDEXA · CAPTOR · Todos los derechos reservados.</p>
+</footer>
+
+<script>
+  // Hamburger
+  const b = document.getElementById('burger'), nm = document.getElementById('nm');
+  b.addEventListener('click', () => { b.classList.toggle('open'); nm.classList.toggle('open'); });
+  function cm(){ b.classList.remove('open'); nm.classList.remove('open'); }
+  window.addEventListener('scroll', cm, { passive: true });
+
+  // Scroll animations
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('[data-anim],[data-stagger]').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
