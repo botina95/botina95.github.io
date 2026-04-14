@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAPTOR — Captura & Optimización · Fabián Botina</title>
+  <meta name="description" content="CAPTOR: automatiza la captura de datos en pantalla y consulta cualquier fuente de información con 7 proveedores y 8 tipos de respuesta.">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    :root {
+      --captor:    #1565C0; --captor-lt: #E3F0FF; --captor-dk: #0D47A1;
+      --text:      #1E293B; --muted:     #64748B; --border:    #E2E8F0;
+      --bg:        #F8FAFC; --white:     #FFFFFF;
+      --r:         12px;
+      --sh:        0 4px 24px rgba(0,0,0,.08);
+      --sh-lg:     0 16px 56px rgba(0,0,0,.14);
+      --font:      'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html  { scroll-behavior: smooth; }
+    body  { font-family: var(--font); color: var(--text); background: var(--white); line-height: 1.6; overflow-x: hidden; }
+    img   { display: block; max-width: 100%; height: auto; }
+    a     { text-decoration: none; color: inherit; }
+    ul    { list-style: none; }
+
+    /* ── Animaciones ── */
+    [data-anim] { opacity: 0; transition: opacity .7s ease, transform .7s ease; }
+    [data-anim="up"]    { transform: translateY(40px); }
+    [data-anim="left"]  { transform: translateX(-48px); }
+    [data-anim="right"] { transform: translateX(48px); }
+    [data-anim].visible { opacity: 1 !important; transform: none !important; }
+    [data-stagger] > * { opacity: 0; transform: translateY(28px); transition: opacity .55s ease, transform .55s ease; }
+    [data-stagger].visible > *:nth-child(1){ opacity:1;transform:none;transition-delay:.04s; }
+    [data-stagger].visible > *:nth-child(2){ opacity:1;transform:none;transition-delay:.11s; }
+    [data-stagger].visible > *:nth-child(3){ opacity:1;transform:none;transition-delay:.18s; }
+    [data-stagger].visible > *:nth-child(4){ opacity:1;transform:none;transition-delay:.25s; }
+    [data-stagger].visible > *:nth-child(5){ opacity:1;transform:none;transition-delay:.32s; }
+    [data-stagger].visible > *:nth-child(6){ opacity:1;transform:none;transition-delay:.39s; }
+    [data-stagger].visible > *:nth-child(7){ opacity:1;transform:none;transition-delay:.46s; }
+    [data-stagger].visible > *:nth-child(8){ opacity:1;transform:none;transition-delay:.53s; }
+
+    /* ── Helpers ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+    .tag { display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 13px;border-radius:20px; }
+    .tc  { background:var(--captor-lt);color:var(--captor-dk); }
+    .tco { background:rgba(255,255,255,.1);color:rgba(255,255,255,.7); }
+    .btn { display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;padding:11px 22px;border-radius:9px;transition:all .2s;cursor:pointer;border:none; }
+    .bc  { background:var(--captor);color:#fff; }
+    .bc:hover { background:var(--captor-dk);transform:translateY(-1px);box-shadow:0 6px 20px rgba(21,101,192,.35); }
+
+    /* ── NAV ── */
+    nav { position:sticky;top:0;z-index:200;background:rgba(255,255,255,.93);backdrop-filter:blur(12px);border-bottom:1px solid var(--border); }
+    .nav-in { display:flex;align-items:center;justify-content:space-between;height:60px; }
+    .nav-brand { font-size:15px;font-weight:700; }
+    .nav-brand span { color:var(--captor); }
+    .nl { display:flex;gap:4px;align-items:center; }
+    .nl a { font-size:13px;font-weight:500;color:var(--muted);padding:6px 13px;border-radius:8px;transition:all .2s; }
+    .nl a:hover { background:var(--bg);color:var(--text); }
+    .nl .nc { color:var(--white)!important;background:var(--captor)!important; }
+    .nl .nc:hover { background:var(--captor-dk)!important; }
+    .burger { display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;border:none;background:transparent; }
+    .burger span { display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all .3s; }
+    .burger.open span:nth-child(1){ transform:translateY(7px) rotate(45deg); }
+    .burger.open span:nth-child(2){ opacity:0; }
+    .burger.open span:nth-child(3){ transform:translateY(-7px) rotate(-45deg); }
+    .nmob { display:none;position:fixed;top:60px;left:0;right:0;background:var(--white);border-bottom:1px solid var(--border);padding:12px 20px 20px;z-index:199;box-shadow:0 8px 24px rgba(0,0,0,.1); }
+    .nmob.open { display:flex;flex-direction:column;gap:4px; }
+    .nmob a { font-size:15px;font-weight:500;color:var(--text);padding:11px 14px;border-radius:9px;transition:background .2s; }
+    .nmob a:hover { background:var(--bg); }
+    .nmob .nc { background:var(--captor)!important;color:#fff!important;text-align:center;margin-top:8px; }
+
+    /* ── HERO ── */
+    .hero { background:linear-gradient(135deg,#071428 0%,#0D47A1 55%,#0a1e3a 100%);color:#fff;padding:88px 0 76px;text-align:center;position:relative;overflow:hidden; }
+    .hero::before { content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 30% 70%,rgba(96,200,255,.12) 0%,transparent 55%),radial-gradient(ellipse at 75% 30%,rgba(21,101,192,.25) 0%,transparent 55%); }
+    .hero > .container { position:relative;z-index:1; }
+    .hero h1 { font-size:clamp(28px,5vw,54px);font-weight:800;line-height:1.12;margin:14px 0 20px;letter-spacing:-.025em; }
+    .hero h1 em { font-style:normal;color:#60C8FF; }
+    .hero-sub { font-size:clamp(15px,2vw,18px);color:rgba(255,255,255,.65);max-width:640px;margin:0 auto 36px; }
+    .hero-pills { display:flex;justify-content:center;flex-wrap:wrap;gap:10px;margin-bottom:40px; }
+    .hero-pill { font-size:12px;font-weight:600;padding:6px 14px;border-radius:20px;background:rgba(255,255,255,.1);color:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.15); }
+
+    /* ── SECCIÓN GENÉRICA ── */
+    .section { padding:80px 0; }
+    .section-alt { background:var(--bg); }
+    .section-dark { background:linear-gradient(160deg,#071428 0%,#0D2A6E 100%);color:#fff; }
+    .section-h { text-align:center;max-width:700px;margin:0 auto 52px; }
+    .section-h h2 { font-size:clamp(22px,3vw,34px);font-weight:800;letter-spacing:-.02em;line-height:1.2;margin:10px 0 14px; }
+    .section-h p  { font-size:15px;color:var(--muted);line-height:1.75; }
+    .section-dark .section-h h2 { color:#fff; }
+    .section-dark .section-h p  { color:rgba(255,255,255,.58); }
+
+    /* ── ARQUITECTURA ── */
+    .arch-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:24px; }
+    .arch-card { border-radius:var(--r);padding:28px 24px;position:relative;overflow:hidden; }
+    .arch-card.designer { background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1px solid #BFDBFE; }
+    .arch-card.server   { background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border:1px solid #BBF7D0; }
+    .arch-card.executor { background:linear-gradient(135deg,#FFF7ED,#FED7AA);border:1px solid #FDBA74; }
+    .arch-icon { font-size:32px;margin-bottom:14px; }
+    .arch-card h3 { font-size:17px;font-weight:800;margin-bottom:8px; }
+    .arch-card .sub { font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;opacity:.65; }
+    .arch-card p  { font-size:13px;line-height:1.7;color:#374151; }
+    .arch-arrow { text-align:center;font-size:28px;color:var(--muted);align-self:center; }
+
+    /* ── PROVIDERS / RESPONSES GRID ── */
+    .items-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px; }
+    .item-card { background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px;transition:box-shadow .25s,transform .25s; }
+    .item-card:hover { box-shadow:var(--sh);transform:translateY(-3px); }
+    .section-dark .item-card { background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.1); }
+    .section-dark .item-card:hover { background:rgba(255,255,255,.1); }
+    .item-icon { width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px;background:var(--captor-lt); }
+    .section-dark .item-icon { background:rgba(255,255,255,.12); }
+    .item-card h4 { font-size:14px;font-weight:700;margin-bottom:6px; }
+    .item-card p  { font-size:12.5px;color:var(--muted);line-height:1.65; }
+    .section-dark .item-card h4 { color:#fff; }
+    .section-dark .item-card p  { color:rgba(255,255,255,.52); }
+
+    /* ── FLUJO ── */
+    .flow { display:flex;gap:0;flex-wrap:wrap;justify-content:center; }
+    .flow-step { display:flex;align-items:center;gap:0; }
+    .fs { background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;min-width:160px;text-align:center;position:relative; }
+    .fs-num { width:28px;height:28px;border-radius:50%;background:var(--captor);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 8px; }
+    .fs h4 { font-size:13px;font-weight:700;margin-bottom:4px; }
+    .fs p  { font-size:11.5px;color:var(--muted);line-height:1.55; }
+    .flow-arrow { font-size:22px;color:#CBD5E1;padding:0 8px;flex-shrink:0; }
+
+    /* ── SECURITY ── */
+    .sec-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px; }
+    .sec-item { display:flex;gap:16px;align-items:flex-start; }
+    .sec-ico { flex-shrink:0;width:40px;height:40px;border-radius:9px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:18px;margin-top:2px; }
+    .sec-item h4 { font-size:14px;font-weight:700;color:#fff;margin-bottom:4px; }
+    .sec-item p  { font-size:12.5px;color:rgba(255,255,255,.55);line-height:1.6; }
+
+    /* ── CTA ── */
+    .cta-box { background:linear-gradient(135deg,#1565C0,#0D47A1);border-radius:20px;padding:56px 40px;text-align:center;color:#fff; }
+    .cta-box h2 { font-size:clamp(22px,3vw,34px);font-weight:800;margin-bottom:14px;letter-spacing:-.02em; }
+    .cta-box p  { font-size:16px;color:rgba(255,255,255,.68);margin-bottom:32px;max-width:520px;margin-left:auto;margin-right:auto; }
+    .cta-btns { display:flex;justify-content:center;gap:12px;flex-wrap:wrap; }
+    .wa-btn { background:#25D366;color:#fff;font-size:15px;font-weight:700;padding:13px 26px;border-radius:10px;display:inline-flex;align-items:center;gap:9px;transition:all .2s; }
+    .wa-btn:hover { background:#1ebe5a;transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,211,102,.45); }
+
+    /* ── FOOTER ── */
+    footer { background:#070C17;color:rgba(255,255,255,.32);text-align:center;padding:26px 20px;font-size:12px; }
+    footer strong { color:rgba(255,255,255,.6); }
+    footer a { color:rgba(255,255,255,.5);margin-left:8px; }
+    footer a:hover { color:rgba(255,255,255,.8); }
+
+    /* ── WhatsApp FAB ── */
+    .wa-fab { position:fixed;bottom:28px;right:28px;z-index:999;display:flex;align-items:center;gap:10px;background:#25D366;color:#fff;font-size:14px;font-weight:700;padding:12px 20px 12px 16px;border-radius:50px;box-shadow:0 6px 28px rgba(37,211,102,.45);text-decoration:none;transition:transform .2s,box-shadow .2s; }
+    .wa-fab:hover { transform:translateY(-3px);box-shadow:0 10px 36px rgba(37,211,102,.55); }
+    .wa-fab svg { width:22px;height:22px;flex-shrink:0; }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px){
+      .arch-grid { grid-template-columns:1fr; }
+      .arch-arrow { transform:rotate(90deg); }
+    }
+    @media(max-width:860px){
+      .nl { display:none; }
+      .burger { display:flex; }
+      .flow { flex-direction:column;align-items:center; }
+      .flow-arrow { transform:rotate(90deg); }
+    }
+    @media(max-width:580px){
+      .items-grid { grid-template-columns:1fr; }
+      .sec-grid   { grid-template-columns:1fr; }
+      .cta-box    { padding:36px 20px; }
+      .wa-fab span { display:none; }
+      .wa-fab { padding:13px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="container nav-in">
+    <div class="nav-brand"><a href="index.html">Fabián <span>Botina</span></a></div>
+    <div class="nl">
+      <a href="index.html#mapocr">MAPOCR</a>
+      <a href="index.html#indexa">INDEXA</a>
+      <a href="index.html#captor">CAPTOR</a>
+      <a href="index.html#contacto" class="nc">Contacto</a>
+    </div>
+    <button class="burger" id="burger" aria-label="Menú"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+<div class="nmob" id="nm">
+  <a href="index.html#mapocr"   onclick="cm()">MAPOCR</a>
+  <a href="index.html#indexa"   onclick="cm()">INDEXA</a>
+  <a href="index.html#captor"   onclick="cm()">CAPTOR</a>
+  <a href="index.html#contacto" onclick="cm()" class="nc">Contacto</a>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <span class="tag tco">⚙️ Captura &amp; Optimización</span>
+    <h1>CAPTOR<br><em>Lee cualquier pantalla.</em><br>Decide más rápido.</h1>
+    <p class="hero-sub">Captura datos de cualquier aplicación de escritorio o web, consulta tus fuentes de información y presenta el resultado al operario en segundos. Sin programar selectores. Sin interrumpir el flujo de trabajo.</p>
+    <div class="hero-pills">
+      <span class="hero-pill">7 Proveedores de datos</span>
+      <span class="hero-pill">8 Tipos de respuesta</span>
+      <span class="hero-pill">Hotkeys globales</span>
+      <span class="hero-pill">Scripts C# en tiempo real</span>
+      <span class="hero-pill">Roles y grupos</span>
+      <span class="hero-pill">Auditoría completa</span>
+    </div>
+    <a href="https://wa.me/573187787454?text=Hola%2C%20me%20interesa%20una%20demo%20de%20Captor" target="_blank" rel="noopener" class="wa-btn" style="display:inline-flex;margin:0 auto">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.556 4.118 1.529 5.845L.057 23.571a.75.75 0 0 0 .921.921l5.726-1.472A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.937 0-3.745-.52-5.298-1.427l-.38-.225-3.932 1.011 1.011-3.931-.225-.38A9.955 9.955 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+      Solicitar demo por WhatsApp
+    </a>
+  </div>
+</section>
+
+<!-- ARQUITECTURA -->
+<section class="section" id="arquitectura">
+  <div class="container">
+    <div class="section-h" data-anim="up">
+      <span class="tag tc">🏗️ Arquitectura</span>
+      <h2>Tres componentes. Un ecosistema.</h2>
+      <p>CAPTOR se distribuye en tres aplicaciones que trabajan en conjunto: el diseñador de flujos, el servidor central y el ejecutor que usa el operario en su puesto de trabajo.</p>
+    </div>
+    <div class="arch-grid" data-stagger>
+      <div class="arch-card designer">
+        <div class="arch-icon">🎨</div>
+        <div class="sub">Administrador</div>
+        <h3>Captor Designer</h3>
+        <p>Aplicación de escritorio para el equipo técnico. Aquí se diseñan los perfiles, se configuran los proveedores de datos, se gestionan usuarios, roles, grupos y se monitorean los logs de ejecución y auditoría de seguridad.</p>
+      </div>
+      <div class="arch-card server">
+        <div class="arch-icon">🖥️</div>
+        <div class="sub">Infraestructura</div>
+        <h3>Captor Server</h3>
+        <p>Servicio Windows con API REST (ASP.NET Core). Centraliza perfiles, usuarios y sesiones. Soporta autenticación JWT, Active Directory, HTTPS opcional, rate limiting y control de sesiones concurrentes según licencia.</p>
+      </div>
+      <div class="arch-card executor">
+        <div class="arch-icon">⚡</div>
+        <div class="sub">Operario</div>
+        <h3>Captor Executor</h3>
+        <p>Cliente ligero en la bandeja del sistema. El operario activa los perfiles con un hotkey global sin salir de su aplicación. Captura datos en pantalla, ejecuta la consulta y muestra el resultado al instante.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PROVEEDORES DE DATOS -->
+<section class="section section-alt" id="proveedores">
+  <div class="container">
+    <div class="section-h" data-anim="up">
+      <span class="tag tc">🔌 Proveedores de Datos</span>
+      <h2>7 fuentes de datos. Sin límites.</h2>
+      <p>Conecta CAPTOR directamente a tu base de datos, tus APIs internas o externas, archivos Excel, texto plano o lógica personalizada en C#. Cada proveedor se configura visualmente sin tocar código.</p>
+    </div>
+    <div class="items-grid" data-stagger>
+      <div class="item-card">
+        <div class="item-icon">🗄️</div>
+        <h4>SQL Server</h4>
+        <p>Ejecuta queries parametrizados directamente sobre tu base de datos SQL Server corporativa. Compatible con autenticación Windows e integrada.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">🐬</div>
+        <h4>MySQL / MariaDB</h4>
+        <p>Conéctate a bases de datos MySQL o MariaDB con la misma simplicidad. Ideal para sistemas de gestión internos o aplicaciones web empresariales.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">📦</div>
+        <h4>SQLite</h4>
+        <p>Para catálogos locales o escenarios offline. La base de datos SQLite viaja con el perfil y no requiere servidor adicional.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">🌐</div>
+        <h4>API REST</h4>
+        <p>Consume cualquier API externa o interna. Soporta Bearer token, Basic Auth y token dinámico obtenido de un endpoint de login. Headers y body JSON o Form configurables visualmente.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">📊</div>
+        <h4>Excel</h4>
+        <p>Lee archivos .xlsx directamente como fuente de datos. Útil para catálogos de productos, tarifas o cualquier tabla gestionada por el equipo sin BD.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">📄</div>
+        <h4>Archivo de texto</h4>
+        <p>Consulta archivos CSV o TXT delimitados. Compatible con exportaciones de sistemas legacy que no tienen API ni BD accesible.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">⚙️</div>
+        <h4>Script C#</h4>
+        <p>Lógica completamente libre con Roslyn. Compilación dinámica, testing con F5 desde el diseñador, syntax highlighting y acceso completo a .NET para cualquier integración personalizada.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TIPOS DE RESPUESTA -->
+<section class="section section-dark" id="respuestas">
+  <div class="container">
+    <div class="section-h" data-anim="up">
+      <span class="tag tco">📤 Tipos de Respuesta</span>
+      <h2>8 formas de entregar el resultado.</h2>
+      <p>Una vez obtenida la información, CAPTOR puede presentarla, escribirla, abrirla o encadenarla de 8 maneras diferentes según el flujo de trabajo del operario.</p>
+    </div>
+    <div class="items-grid" data-stagger>
+      <div class="item-card">
+        <div class="item-icon">💬</div>
+        <h4>Mensaje</h4>
+        <p>Muestra un texto simple al operario: confirmación, advertencia o dato consultado. Ideal para validaciones rápidas en pantalla.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">📋</div>
+        <h4>Tabla</h4>
+        <p>Presenta el resultado como grilla de datos. El operario puede revisar múltiples registros y seleccionar el que necesita.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">⌨️</div>
+        <h4>Escritura en campos</h4>
+        <p>CAPTOR escribe automáticamente los valores en los campos de la aplicación activa usando UIA o SendKeys. El operario no tiene que copiar ni pegar nada.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">🔧</div>
+        <h4>Script C#</h4>
+        <p>Lógica personalizada para transformar, combinar o enrutar el resultado antes de presentarlo. Sin restricciones en la manipulación de datos.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">🔗</div>
+        <h4>Combinado</h4>
+        <p>Encadena múltiples acciones en secuencia: consultar, escribir campos y mostrar un mensaje, todo en un solo perfil.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">🌍</div>
+        <h4>Abrir URL</h4>
+        <p>Abre automáticamente una URL construida con los datos capturados. Perfecto para abrir expedientes en sistemas web sin buscar manualmente.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">📁</div>
+        <h4>Abrir carpeta</h4>
+        <p>Navega directamente a la carpeta del sistema de archivos correspondiente al registro procesado. Cero búsqueda manual en el explorador.</p>
+      </div>
+      <div class="item-card">
+        <div class="item-icon">📂</div>
+        <h4>Abrir archivo</h4>
+        <p>Localiza y abre el archivo específico asociado al resultado de la consulta. Ideal para acceder a documentos, imágenes o PDFs de expedientes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FLUJO DE TRABAJO -->
+<section class="section" id="flujo">
+  <div class="container">
+    <div class="section-h" data-anim="up">
+      <span class="tag tc">🔄 Flujo de Trabajo</span>
+      <h2>Del clic a la respuesta en segundos.</h2>
+      <p>El operario no necesita saber nada de bases de datos ni APIs. Solo presiona su hotkey y CAPTOR hace el resto.</p>
+    </div>
+    <div class="flow" data-stagger>
+      <div class="flow-step">
+        <div class="fs">
+          <div class="fs-num">1</div>
+          <h4>Hotkey global</h4>
+          <p>El operario presiona su combinación de teclas sin salir de su app actual.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="fs">
+          <div class="fs-num">2</div>
+          <h4>Captura visual</h4>
+          <p>CAPTOR lee el campo configurado en pantalla usando UIA o región visual.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="fs">
+          <div class="fs-num">3</div>
+          <h4>Consulta al proveedor</h4>
+          <p>El valor capturado se envía al proveedor: BD, API REST, Excel, Script, etc.</p>
+        </div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="fs">
+          <div class="fs-num">4</div>
+          <h4>Resultado al instante</h4>
+          <p>CAPTOR muestra, escribe o abre lo que el operario necesita. Sin copiar, sin buscar.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SEGURIDAD -->
+<section class="section section-dark" id="seguridad">
+  <div class="container">
+    <div class="section-h" data-anim="up">
+      <span class="tag tco">🔒 Seguridad</span>
+      <h2>Diseñado para entornos corporativos.</h2>
+      <p>CAPTOR implementa un modelo de seguridad por capas pensado para empresas con requisitos de control de acceso, trazabilidad y cumplimiento.</p>
+    </div>
+    <div class="sec-grid" data-stagger>
+      <div class="sec-item">
+        <div class="sec-ico">🎫</div>
+        <div>
+          <h4>JWT + Active Directory</h4>
+          <p>Autenticación con tokens JWT de corta duración. Soporte para Active Directory con validación de credenciales corporativas o SSO automático por dominio.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-ico">👥</div>
+        <div>
+          <h4>Roles y grupos de perfiles</h4>
+          <p>Define qué perfiles puede ejecutar cada usuario o grupo. Control granular por rol: diseñador, operario, administrador.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-ico">📊</div>
+        <div>
+          <h4>Log de ejecuciones</h4>
+          <p>Cada ejecución queda registrada: usuario, perfil, fecha/hora, datos capturados y resultado. Trazabilidad completa de operaciones.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-ico">🛡️</div>
+        <div>
+          <h4>Auditoría de seguridad</h4>
+          <p>Registro de todos los eventos de seguridad: logins exitosos, intentos fallidos, cierres de sesión y cambios de contraseña con IP y detalle.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-ico">🔄</div>
+        <div>
+          <h4>Sesiones concurrentes controladas</h4>
+          <p>La licencia define el máximo de usuarios simultáneos. Las sesiones se monitoran en tiempo real con heartbeat automático.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-ico">🌐</div>
+        <div>
+          <h4>HTTPS configurable</h4>
+          <p>Soporte para certificado .pfx propio. Configurable desde el panel de setup del servidor: puede usarse en HTTP para intranets o HTTPS para redes públicas.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-ico">☁️</div>
+        <div>
+          <h4>Validación de licencia en nube</h4>
+          <p>Cada licencia se verifica periódicamente contra la nube. Detección de manipulación del reloj del sistema y período de gracia controlado para entornos con conectividad limitada.</p>
+        </div>
+      </div>
+      <div class="sec-item">
+        <div class="sec-ico">📝</div>
+        <div>
+          <h4>Historial de cambios</h4>
+          <p>Registra cada modificación de configuración: quién cambió qué, valor anterior y valor nuevo. Ideal para cumplimiento normativo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="section" id="demo">
+  <div class="container">
+    <div class="cta-box" data-anim="up">
+      <h2>¿Listo para ver CAPTOR en acción?</h2>
+      <p>Escríbeme por WhatsApp y coordinamos una demo personalizada adaptada a tu flujo de trabajo. Sin costo, sin compromiso.</p>
+      <div class="cta-btns">
+        <a href="https://wa.me/573187787454?text=Hola%2C%20me%20interesa%20una%20demo%20de%20Captor" target="_blank" rel="noopener" class="wa-btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.556 4.118 1.529 5.845L.057 23.571a.75.75 0 0 0 .921.921l5.726-1.472A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.937 0-3.745-.52-5.298-1.427l-.38-.225-3.932 1.011 1.011-3.931-.225-.38A9.955 9.955 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+          Solicitar demo — +57 318 778 7454
+        </a>
+        <a href="index.html" class="btn" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3)">← Volver al inicio</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 <strong>Fabián Botina</strong> · MAPOCR · INDEXA · CAPTOR · Todos los derechos reservados.<a href="index.html">Inicio</a></p>
+</footer>
+
+<!-- WhatsApp flotante -->
+<a href="https://wa.me/573187787454?text=Hola%2C%20me%20interesa%20una%20demo%20de%20Captor" target="_blank" rel="noopener" class="wa-fab" aria-label="Contactar por WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.556 4.118 1.529 5.845L.057 23.571a.75.75 0 0 0 .921.921l5.726-1.472A11.943 11.943 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.937 0-3.745-.52-5.298-1.427l-.38-.225-3.932 1.011 1.011-3.931-.225-.38A9.955 9.955 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+  <span>WhatsApp</span>
+</a>
+
+<script>
+  const b = document.getElementById('burger'), nm = document.getElementById('nm');
+  b.addEventListener('click', () => { b.classList.toggle('open'); nm.classList.toggle('open'); });
+  function cm(){ b.classList.remove('open'); nm.classList.remove('open'); }
+  window.addEventListener('scroll', cm, { passive: true });
+
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('[data-anim],[data-stagger]').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
